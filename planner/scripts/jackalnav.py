@@ -162,7 +162,7 @@ class JackalNav:
                                                                                         )
 
 
-            print("velocity: ", v_optimal)
+            # print("velocity: ", v_optimal)
 
             self.controls_init = jnp.concatenate((v_optimal,omega_optimal))
             if v_optimal[1] != None and np.linalg.norm(self.pose[:2] - self.goal_arr[:2]) > 0.75:
