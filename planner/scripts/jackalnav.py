@@ -34,7 +34,7 @@ class JackalNav:
         maxiter = 100
 
         #self.planner = gradient_descent(maxiter, self.num_controls)
-        self.planner = CEM(maxiter, self.num_controls, num_samples=200, percentage_elite=0.1)
+        self.planner = CEM(maxiter, self.num_controls, num_samples=200, percentage_elite=0.1, stomp_like=True)
         self.num = 0
         self.controls_init = 0.01*jnp.ones(2*self.num_controls)
         #----------------------------------------------------------------------------------

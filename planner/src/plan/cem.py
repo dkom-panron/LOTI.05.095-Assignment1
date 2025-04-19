@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import jax
 
 class CEM:
-	def __init__(self, maxiter = 200, num_controls = 20, num_samples = 50, percentage_elite = 0.1):
+	def __init__(self, maxiter = 200, num_controls = 20, num_samples = 50, percentage_elite = 0.1, stomp_like=False):
 
 		self.delta_t = 0.1
 		self.n = num_controls
@@ -20,24 +20,50 @@ class CEM:
 
 		## For cost
 		self.goal_cost = 1.0
-		self.smoothness_cost = 0.01
+		self.smoothness_cost = 0.1
 		self.obstacle_cost = 10.0
+		self.obstacle_radius = 0.5
 
 		## CEM initialization
 
-		# normal CEM
 		self.key = random.PRNGKey(0)
 		self.key, subkey = random.split(self.key)
-
 		self.init_mean = jnp.zeros(2*self.n)
-		self.init_cov_v = 2*jnp.identity(self.n)
-		self.init_cov_omega = jnp.identity(self.n)*0.5
+		# normal CEM
+		if not stomp_like:
+			self.init_cov_v = 2*jnp.identity(self.n)
+			self.init_cov_omega = jnp.identity(self.n)*0.5
 
-		self.init_cov = jax.scipy.linalg.block_diag(self.init_cov_v, self.init_cov_omega)
+			self.init_cov = jax.scipy.linalg.block_diag(self.init_cov_v, self.init_cov_omega)
+		else:
+			# "stomp-like"
+			A = np.diff(np.diff(np.identity(self.n), axis = 0), axis = 0)
+
+			temp_1 = np.zeros(self.n)
+			temp_2 = np.zeros(self.n)
+			temp_3 = np.zeros(self.n)
+			temp_4 = np.zeros(self.n)
+
+			temp_1[0] = 1.0
+			temp_2[0] = -2
+			temp_2[1] = 1
+			temp_3[-1] = -2
+			temp_3[-2] = 1
+
+			temp_4[-1] = 1.0
+
+			A_mat = -np.vstack(( temp_1, temp_2, A, temp_3, temp_4   ))
+
+			R = np.dot(A_mat.T, A_mat)
+			mu = np.zeros(self.n) # not needed
+			cov = np.linalg.pinv(R)
+			self.init_cov = jax.scipy.linalg.block_diag(0.001*cov, 0.0003*cov)
+
+
 
 		self.compute_cost_batch = jit(vmap(self.compute_cost,
 									 in_axes=(0,None,None,None,None,None,
-												  None,None,None,None)))
+												None,None,None,None)))
 
 		print("!!PLANNER INITIALIZED!!")
 		
@@ -68,8 +94,7 @@ class CEM:
 		x_diff = x[None, :] - x_obs[:, None] # shape (num_obstacles, n)
 		y_diff = y[None, :] - y_obs[:, None] # shape (num_obstacles, n)
 		
-		# assuming the obstacle is a circle with radius 0.5
-		f_obs = -(x_diff**2 + y_diff**2) + (0.5)**2 # shape (num_obstacles, n)
+		f_obs = -(x_diff**2 + y_diff**2) + (self.obstacle_radius)**2 # shape (num_obstacles, n)
 		
 		c_obs = jnp.sum(jnp.maximum(0, f_obs), axis=1) # shape (num_obstacles,)
 
