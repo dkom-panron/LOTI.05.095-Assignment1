@@ -19,6 +19,7 @@ import open3d_conversions
 from scipy.spatial.transform import Rotation as R
 from gazebo_model_collision_plugin.msg import Contact
 from plan.gradient_descent import gradient_descent
+from plan.cem import CEM
 
 class JackalNav:
     def __init__(self):
@@ -32,7 +33,8 @@ class JackalNav:
         self.num_controls = 30
         maxiter = 100
 
-        self.planner = gradient_descent(maxiter, self.num_controls)
+        #self.planner = gradient_descent(maxiter, self.num_controls)
+        self.planner = CEM(maxiter, self.num_controls, num_samples=200, percentage_elite=0.1)
         self.num = 0
         self.controls_init = 0.01*jnp.ones(2*self.num_controls)
         #----------------------------------------------------------------------------------
@@ -153,16 +155,15 @@ class JackalNav:
             (self.transformed_goal is not None) and \
             (self.cloud is not None) :
 
-            v_optimal, omega_optimal, traj_optimal = self.planner.compute_controls_nesterov(
-                                                                                        x_init = 0., y_init= 0., theta_init = 0.,
-					                                                                    v_init = self.linear_vel_mag.item(), omega_init = self.angular_vel.item(), 
-					                                                                    x_goal = self.transformed_goal[0], y_goal = self.transformed_goal[1],
-					                                                                    x_obs = self.cloud[:,0], y_obs = self.cloud[:,1],
-                                                                                        controls_init=self.controls_init
-                                                                                        )
+            v_optimal, omega_optimal, traj_optimal = self.planner.compute_controls(
+                x_init = 0., y_init= 0., theta_init = 0.,
+                v_init = self.linear_vel_mag.item(), omega_init = self.angular_vel.item(), 
+                x_goal = self.transformed_goal[0], y_goal = self.transformed_goal[1],
+                x_obs = self.cloud[:,0], y_obs = self.cloud[:,1],
+                controls_init=self.controls_init
+                )
 
-
-            # print("velocity: ", v_optimal)
+            #print("v_optimal: ", v_optimal)
 
             self.controls_init = jnp.concatenate((v_optimal,omega_optimal))
             if v_optimal[1] != None and np.linalg.norm(self.pose[:2] - self.goal_arr[:2]) > 0.75:
