@@ -20,6 +20,7 @@ from scipy.spatial.transform import Rotation as R
 from gazebo_model_collision_plugin.msg import Contact
 from plan.gradient_descent import gradient_descent
 from plan.cem import CEM
+from plan.gauss_newton import gauss_newton
 
 class JackalNav:
     def __init__(self):
@@ -34,7 +35,9 @@ class JackalNav:
         maxiter = 100
 
         #self.planner = gradient_descent(maxiter, self.num_controls)
-        self.planner = CEM(maxiter, self.num_controls, num_samples=200, percentage_elite=0.1, stomp_like=True)
+        #self.planner = CEM(maxiter, self.num_controls, num_samples=200, percentage_elite=0.1, stomp_like=True)
+        self.planner = gauss_newton(maxiter, self.num_controls)
+
         self.num = 0
         self.controls_init = 0.01*jnp.ones(2*self.num_controls)
         #----------------------------------------------------------------------------------
