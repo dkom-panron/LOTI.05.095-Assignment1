@@ -36,7 +36,7 @@ class CEM:
 
 			self.init_cov = jax.scipy.linalg.block_diag(self.init_cov_v, self.init_cov_omega)
 		else:
-			# "stomp-like"
+			# "stomp-like" for smoothness
 			A = np.diff(np.diff(np.identity(self.n), axis = 0), axis = 0)
 
 			temp_1 = np.zeros(self.n)
@@ -143,7 +143,7 @@ class CEM:
 				controls_init):
 		
 		# inner function for lax scan
-		def body_fun(carry, _):
+		def lax_cem(carry, _):
 			mean, cov, key = carry
 			key, subkey = random.split(key)
 			
@@ -169,7 +169,7 @@ class CEM:
 		init_carry = (self.init_mean, self.init_cov, self.key)
 		
 		(final_mean, final_cov, final_key), _ = jax.lax.scan(
-			body_fun, 
+			lax_cem, 
 			init_carry, 
 			jnp.arange(self.maxiter)
 		)
