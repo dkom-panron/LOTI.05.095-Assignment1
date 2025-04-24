@@ -33,22 +33,31 @@ class JackalNav:
         ## Planner
 
         argv = rospy.myargv()
-        if len(argv) != 5:
-            print("USAGE: rosrun planner jackalnav.py [nesterov, cem, gauss_newton, cem_nesterov] [maxiter] [num_controls] [num_samples]")
+        if len(argv) != 4:
+            print("USAGE: rosrun planner jackalnav.py [nesterov, cem, gauss_newton, cem_nesterov] [maxiter] [num_controls] [num_samples (for cem)]")
             exit(1)
 
         maxiter = int(argv[2])
         self.num_controls = int(argv[3])
-        num_samples = 200
 
         planner_type = argv[1]
         if planner_type == "nesterov":
             self.planner = gradient_descent(maxiter, self.num_controls)
         elif planner_type == "cem":
+            if len(argv) != 5:
+                print("USAGE: rosrun planner jackalnav.py [nesterov, cem, gauss_newton, cem_nesterov] [maxiter] [num_controls] [num_samples (if using cem)]")
+                exit(1)
+
+            num_samples = int(argv[4])
             self.planner = CEM(maxiter, self.num_controls, num_samples=num_samples, percentage_elite=0.1, stomp_like=True)
         elif planner_type == "gauss_newton":
             self.planner = gauss_newton(maxiter, self.num_controls)
         elif planner_type == "cem_nesterov":
+            if len(argv) != 5:
+                print("USAGE: rosrun planner jackalnav.py [nesterov, cem, gauss_newton, cem_nesterov] [maxiter] [num_controls] [num_samples]")
+                exit(1)
+
+            num_samples = int(argv[4])
             self.planner = cem_nesterov(maxiter, self.num_controls, cem_num_samples=num_samples, cem_percentage_elite=0.1, cem_stomp_like=True)
         else:
             print("!!ERROR: Invalid planner type. Choose from [nesterov, cem, gauss_newton, cem_nesterov]!!")

@@ -39,7 +39,7 @@ Note that this code has only been tested with ROS-Noetic on Ubuntu 20.04. We ass
 
 2. To start the Nesterov accelerated gradient based planner, run:
 	```
-	rosrun planner jackalnav.py
+	rosrun planner jackalnav.py [nesterov, cem, gauss_newton, cem_nesterov] [maxiter] [num_controls] [num_samples (if using cem)]
 	```
 	
 3. Once the planner is running, you can begin navigation by setting a 2D Nav Goal in RViZ.
