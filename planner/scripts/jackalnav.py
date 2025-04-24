@@ -21,6 +21,7 @@ from gazebo_model_collision_plugin.msg import Contact
 from plan.gradient_descent import gradient_descent
 from plan.cem import CEM
 from plan.gauss_newton import gauss_newton
+from plan.cem_nesterov import cem_nesterov
 
 class JackalNav:
     def __init__(self):
@@ -31,12 +32,27 @@ class JackalNav:
 
         ## Planner
 
-        self.num_controls = 30
-        maxiter = 100
+        argv = rospy.myargv()
+        if len(argv) != 5:
+            print("USAGE: rosrun planner jackalnav.py [nesterov, cem, gauss_newton, cem_nesterov] [maxiter] [num_controls] [num_samples]")
+            exit(1)
 
-        #self.planner = gradient_descent(maxiter, self.num_controls)
-        #self.planner = CEM(maxiter, self.num_controls, num_samples=200, percentage_elite=0.1, stomp_like=True)
-        self.planner = gauss_newton(maxiter, self.num_controls)
+        maxiter = int(argv[2])
+        self.num_controls = int(argv[3])
+        num_samples = 200
+
+        planner_type = argv[1]
+        if planner_type == "nesterov":
+            self.planner = gradient_descent(maxiter, self.num_controls)
+        elif planner_type == "cem":
+            self.planner = CEM(maxiter, self.num_controls, num_samples=num_samples, percentage_elite=0.1, stomp_like=True)
+        elif planner_type == "gauss_newton":
+            self.planner = gauss_newton(maxiter, self.num_controls)
+        elif planner_type == "cem_nesterov":
+            self.planner = cem_nesterov(maxiter, self.num_controls, cem_num_samples=num_samples, cem_percentage_elite=0.1, cem_stomp_like=True)
+        else:
+            print("!!ERROR: Invalid planner type. Choose from [nesterov, cem, gauss_newton, cem_nesterov]!!")
+            exit(1)
 
         self.num = 0
         self.controls_init = 0.01*jnp.ones(2*self.num_controls)

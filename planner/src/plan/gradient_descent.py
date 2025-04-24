@@ -129,7 +129,7 @@ class gradient_descent:
 		return cost
 
 	@partial(jit, static_argnums=(0,))
-	def compute_controls_nesterov(self, x_init, y_init, theta_init, 
+	def compute_controls(self, x_init, y_init, theta_init, 
 				  v_init, omega_init,
 				  x_goal, y_goal,
 				  x_obs, y_obs,
