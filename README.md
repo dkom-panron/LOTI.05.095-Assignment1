@@ -37,7 +37,7 @@ Note that this code has only been tested with ROS-Noetic on Ubuntu 20.04. We ass
 	```
 	* jackal_custom is a sparse environment. More cluttered 300 navigation environments from the [BARN](https://cs.gmu.edu/~xiao/Research/BARN/BARN.html) dataset, named `world_0` to `world_299`, could also be used.
 
-2. To start the Nesterov accelerated gradient based planner, run:
+2. To start the planner, run:
 	```
 	rosrun planner jackalnav.py [nesterov, cem, gauss_newton, cem_nesterov] [maxiter] [num_controls] [num_samples (if using cem)]
 	```
