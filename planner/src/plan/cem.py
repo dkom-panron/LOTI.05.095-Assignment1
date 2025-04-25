@@ -28,7 +28,7 @@ class CEM:
 
 		self.key = random.PRNGKey(0)
 		self.key, subkey = random.split(self.key)
-		self.init_mean = jnp.zeros(2*self.n)
+		#self.init_mean = jnp.zeros(2*self.n)
 		# normal CEM
 		if not stomp_like:
 			self.init_cov_v = 2*jnp.identity(self.n)
@@ -140,7 +140,7 @@ class CEM:
 				v_init, omega_init,
 				x_goal, y_goal,
 				x_obs, y_obs,
-				controls_init):
+				mean_init):
 		
 		# inner function for lax scan
 		def lax_cem(carry, _):
@@ -166,7 +166,7 @@ class CEM:
 			
 			return (new_mean, new_cov, key), None
 		
-		init_carry = (self.init_mean, self.init_cov, self.key)
+		init_carry = (mean_init, self.init_cov, self.key)
 		
 		(final_mean, final_cov, final_key), _ = jax.lax.scan(
 			lax_cem, 
@@ -188,4 +188,4 @@ class CEM:
 		x, y, v, omega = self.compute_rollout(controls_best, x_init, y_init, theta_init, v_init, omega_init)
 		trajectory = jnp.vstack((x,y)).T
 		
-		return v, omega, trajectory
+		return v, omega, trajectory, final_mean

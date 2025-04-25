@@ -108,6 +108,10 @@ class gradient_descent:
 		cost_goal_traj = jnp.sum(c_goal_traj)
 		
 
+		# for GD the obstacle cost function
+		# is sum(max(0, f)), where f is
+		# -(x-x0)^2 - (y-y0)^2 + d^2
+		# for gauss newton, we simply remove the sum
 		cost_obstacle_b = self.compute_obs_cost_batch(x_obs,y_obs,x,y)
 		cost_obstacle = jnp.sum(jnp.maximum(jnp.zeros(self.n), cost_obstacle_b))
 		
