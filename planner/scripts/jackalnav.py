@@ -33,7 +33,7 @@ class JackalNav:
         ## Planner
 
         argv = rospy.myargv()
-        if len(argv) != 4:
+        if len(argv) < 4:
             print("USAGE: rosrun planner jackalnav.py [nesterov, cem, gauss_newton, cem_nesterov] [maxiter] [num_controls] [num_samples (for cem)]")
             exit(1)
 
