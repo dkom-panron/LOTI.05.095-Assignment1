@@ -5,7 +5,7 @@ import jax.numpy as jnp
 from functools import partial
 from jax import jit, random, vmap, grad, jacfwd, jacrev
 import time
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import jax
 
 class gradient_descent:
