@@ -54,4 +54,5 @@ class cem_nesterov:
                                                                    x_obs, y_obs,
                                                                    controls)
 
+        # todo construct new mean from nesterov controls
         return controls

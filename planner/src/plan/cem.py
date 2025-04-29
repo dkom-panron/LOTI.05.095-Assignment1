@@ -142,6 +142,8 @@ class CEM:
 				x_obs, y_obs,
 				mean_init):
 		
+		## TODO: velocity costs!
+		
 		# inner function for lax scan
 		def lax_cem(carry, _):
 			mean, cov, key = carry

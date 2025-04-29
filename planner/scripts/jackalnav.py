@@ -97,6 +97,7 @@ class JackalNav:
 
         # Odometry
         self.pose = None
+        self.linear_acc = None
         self.linear_vel = None
         self.linear_vel_mag = None
         self.prev_linear_vel_mag = 0.0
