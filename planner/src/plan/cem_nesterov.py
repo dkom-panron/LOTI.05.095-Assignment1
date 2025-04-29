@@ -39,20 +39,21 @@ class cem_nesterov:
                 controls_init):
 
         # CEM
-        v_optimal, omega_optimal, traj_optimal = self.cem_optimizer.compute_controls(x_init, y_init, theta_init,
+        v_optimal, omega_optimal, traj_optimal, new_mean = self.cem_optimizer.compute_controls(x_init, y_init, theta_init,
                                                        v_init, omega_init,
                                                        x_goal, y_goal,
                                                        x_obs, y_obs,
                                                        controls_init)
 
-        controls = jnp.concatenate((v_optimal, omega_optimal))
+        cem_controls = jnp.concatenate((v_optimal, omega_optimal))
 
         # Gradient Descent
-        controls = self.gradient_descent_optimizer.compute_controls(x_init, y_init, theta_init,
+        v_optimal, omega_optimal, traj_optimal = self.gradient_descent_optimizer.compute_controls(x_init, y_init, theta_init,
                                                                    v_init, omega_init,
                                                                    x_goal, y_goal,
                                                                    x_obs, y_obs,
-                                                                   controls)
+                                                                   cem_controls)
 
-        # todo construct new mean from nesterov controls
-        return controls
+        new_mean = jnp.concatenate((v_optimal, omega_optimal))
+
+        return v_optimal, omega_optimal, traj_optimal, new_mean
