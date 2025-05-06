@@ -59,10 +59,10 @@ class gauss_newton:
 
         obstacle = (x - x_obs)**2+(y-y_obs)**2-(.5)**2
 
-        cost_obstacle = (1/self.beta)*jnp.log(1 + jnp.exp(-self.beta*obstacle))
+        #cost_obstacle = (1/self.beta)*jnp.log(1 + jnp.exp(-self.beta*obstacle))
         # cost_obstacle = jnp.maximum(0,-obstacle)
 
-        return cost_obstacle
+        return obstacle
 
     @partial(jit, static_argnums=(0,))
     def compute_vel_cost(self,v):
@@ -127,6 +127,9 @@ class gauss_newton:
         """
     
         cost_obstacle_b = self.compute_obs_cost_batch(x_obs,y_obs,x,y)
+
+        cost_obstacle_b = cost_obstacle_b.flatten()
+        cost_obstacle = (1/self.beta)*jnp.log(1 + jnp.exp(-self.beta*cost_obstacle_b))
         #print(f"{cost_obstacle_b.shape=}")
         #jax.debug.print("shape: {x}", x = cost_obstacle_b.shape)
         #cost_obstacle = jnp.sum(jnp.maximum(jnp.zeros(self.n), cost_obstacle_b))
@@ -142,7 +145,7 @@ class gauss_newton:
             self.w_goal * error_goal_y,
             self.w_smoothness_velocity * error_smoothness_velocity,
             self.w_smoothness_omega * error_smoothness_omega,
-            self.w_obstacle * cost_obstacle_b.flatten(),
+            self.w_obstacle * cost_obstacle,
             self.w_velocity * error_velocity,
             self.w_omega * error_omega,
             self.w_trajectory * error_goal_traj
