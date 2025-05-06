@@ -43,13 +43,12 @@ Note that this code has only been tested with ROS-Noetic on Ubuntu 20.04. We ass
 	```
 
 You can specify the following arguments for the planner:
-	```
+
 	_optimizer:=[nesterov, gauss_newton, cem, cem_nesterov] (default nesterov)
 	_maxiter:=int (default 100)
 	_num_controls:=int (default 20)
 	_num_samples:=int (default 50, only for cem and cem_nesterov)
 	_percentage_elite:=float (default 0.1, only for cem and cem_nesterov)
 	_stomp_like:=bool (default True, only for cem and cem_nesterov)
-	```
 	
 3. Once the planner is running, you can begin navigation by setting a 2D Nav Goal in RViZ.

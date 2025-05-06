@@ -36,14 +36,14 @@ class cem_nesterov:
                 v_init, omega_init,
                 x_goal, y_goal,
                 x_obs, y_obs,
-                controls_init):
+                mean_init):
 
         # CEM
         v_optimal, omega_optimal, traj_optimal, new_mean = self.cem_optimizer.compute_controls(x_init, y_init, theta_init,
                                                        v_init, omega_init,
                                                        x_goal, y_goal,
                                                        x_obs, y_obs,
-                                                       controls_init)
+                                                       mean_init)
 
         cem_controls = jnp.concatenate((v_optimal, omega_optimal))
 

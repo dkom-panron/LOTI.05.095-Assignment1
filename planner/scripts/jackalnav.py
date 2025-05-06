@@ -50,15 +50,15 @@ class JackalNav:
             self.planner = CEM(self.maxiter, self.num_controls, num_samples=self.num_samples, percentage_elite=self.percentage_elite, stomp_like=self.stomp_like)
             print(f"[PLANNER] Using CEM with maxiter={self.maxiter}, num_controls={self.num_controls}, num_samples={self.num_samples}, percentage_elite={self.percentage_elite}, stomp_like={self.stomp_like}")
 
-            self.cem_mean = jnp.zeros((self.num_controls, 2))
+            self.cem_mean = jnp.zeros(2 * self.num_controls)
         elif self.optimizer == "cem_nesterov":
             self.num_samples = rospy.get_param("~num_samples", 50)
             self.percentage_elite = rospy.get_param("~percentage_elite", 0.1)
             self.stomp_like = rospy.get_param("~stomp_like", True)
-            self.planner = cem_nesterov(self.maxiter, self.num_controls, num_samples=self.num_samples, percentage_elite=self.percentage_elite, stomp_like=self.stomp_like)
+            self.planner = cem_nesterov(self.maxiter, self.num_controls, cem_num_samples=self.num_samples, cem_percentage_elite=self.percentage_elite, cem_stomp_like=self.stomp_like)
             print(f"[PLANNER] Using CEM Nesterov with maxiter={self.maxiter}, num_controls={self.num_controls}, num_samples={self.num_samples}, percentage_elite={self.percentage_elite}, stomp_like={self.stomp_like}")
 
-            self.cem_mean = jnp.zeros((self.num_controls, 2))
+            self.cem_mean = jnp.zeros(2 * self.num_controls)
 
         self.num = 0
         self.controls_init = 0.01*jnp.ones(2*self.num_controls)
