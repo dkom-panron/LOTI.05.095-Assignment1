@@ -18,11 +18,11 @@ class gauss_newton:
         self.eta = 0.1 # nb, inverse of gradient descent eta
 
         self.w_goal = 0.25
-        self.w_velocity = 0.95
-        self.w_omega = 0.8
+        self.w_velocity = 0.75
+        self.w_omega = 0.5
         self.w_smoothness_velocity = 0.5
         self.w_smoothness_omega = 0.5
-        self.w_obstacle = 5.0
+        self.w_obstacle = 10.0
 
         self.w_trajectory = 0.2
 
@@ -134,8 +134,13 @@ class gauss_newton:
         #jax.debug.print("shape: {x}", x = cost_obstacle_b.shape)
         #cost_obstacle = jnp.sum(jnp.maximum(jnp.zeros(self.n), cost_obstacle_b))
 
-        error_velocity = self.compute_vel_cost(v)
-        error_omega = self.compute_omega_cost(omega)        
+        #error_velocity = self.compute_vel_cost(v)
+        #error_omega = self.compute_omega_cost(omega)        
+
+        error_velocity_max = (1/self.beta)*jnp.log(1 + jnp.exp(-self.beta*(self.v_max - v)))
+        error_velocity_min = (1/self.beta)*jnp.log(1 + jnp.exp(-self.beta*(+v - self.v_min)))
+        error_omega_max = (1/self.beta)*jnp.log(1 + jnp.exp(-self.beta*(self.omega_max - omega)))
+        error_omega_min = (1/self.beta)*jnp.log(1 + jnp.exp(-self.beta*(+omega - self.omega_min)))
 
         c_goal_traj = ((x-x_goal)**2+(y-y_goal)**2)
         error_goal_traj = c_goal_traj
@@ -146,8 +151,10 @@ class gauss_newton:
             self.w_smoothness_velocity * error_smoothness_velocity,
             self.w_smoothness_omega * error_smoothness_omega,
             self.w_obstacle * cost_obstacle,
-            self.w_velocity * error_velocity,
-            self.w_omega * error_omega,
+            self.w_velocity * error_velocity_max,
+            self.w_velocity * error_velocity_min,
+            self.w_omega * error_omega_max,
+            self.w_omega * error_omega_min,
             self.w_trajectory * error_goal_traj
         ))
 
