@@ -39,7 +39,7 @@ class JackalNav:
         #----------------------------------------------------------------------------------
 
         # Observation topics
-        self.cloud_topic = rospy.get_param('~cloud_topic','/noisy_cloud')
+        self.cloud_topic = rospy.get_param('~cloud_topic','/lidar_cloud')
         self.odom_topic = rospy.get_param('~odom_topic','/odometry/filtered')
 
         # Publishers
@@ -67,6 +67,7 @@ class JackalNav:
 
         # Odometry
         self.pose = None
+	self.linear_acc = None
         self.linear_vel = None
         self.linear_vel_mag = None
         self.prev_linear_vel_mag = 0.0
