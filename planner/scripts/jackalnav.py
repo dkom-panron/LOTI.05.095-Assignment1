@@ -17,8 +17,7 @@ import open3d as o3d
 import open3d_conversions
 
 from scipy.spatial.transform import Rotation as R
-# from planner.mpc_planner_singlestep_vel import Planner
-from planner.mpc_planner_multistep_vel_3s import Planner
+from planner.gradient_descent import gradient_descent
 import time
 import matplotlib.pyplot as plt
 
@@ -30,17 +29,13 @@ class JackalNav:
         #----------------------------------------------------------------------------------
 
         ## Planner
-
-
-        # self.planner = Planner(model_path="/home/ims/jackal_primitives_ws/src/primitives/src/planner/saved_models_singlestep_vel/", 
-                #   cost="mmd")
         
-        self.planner = Planner(model_path="/home/ims/jackal_primitives_ws/src/primitives/src/planner/saved_models_multistep_vel_3s_noisy_and_noiseless/", 
-                  cost="mmd")
+        self.num_controls = 30
+        maxiter = 100
 
-        self.key = jax.random.PRNGKey(0)
-        self.mean_actions_jackal_nav = jnp.zeros((2*(self.planner.prob.n))) # jnp.zeros(2) 
+        self.planner = gradient_descent(maxiter, self.num_controls)
         self.num = 0
+        self.controls_init = 0.01*jnp.ones(2*self.num_controls)
         #----------------------------------------------------------------------------------
 
         # Observation topics
@@ -51,7 +46,6 @@ class JackalNav:
         self._vel_pub = rospy.Publisher("/cmd_vel", Twist,queue_size=10)
         
         # RViZ Visualization publishers
-        self._markerarr_pub = rospy.Publisher('/primitives_ellite', MarkerArray, queue_size=10)
         self._linestrip_pub = rospy.Publisher('/trajectory_optimal', Marker, queue_size=10)
         self._arrowmarker_pub = rospy.Publisher('/goal_marker', Marker, queue_size=10)
         self._spheremarker_pub = rospy.Publisher('/goaltf_marker', Marker, queue_size=10)
@@ -118,28 +112,27 @@ class JackalNav:
             (self.transformed_goal is not None) and \
             (self.cloud is not None) :
 
+            v_optimal, omega_optimal, traj_optimal = self.planner.compute_controls_nesterov(
+                                                                                        x_init = 0., y_init= 0., theta_init = 0.,
+					                                                                    v_init = self.linear_vel_mag.item(), omega_init = self.angular_vel.item(), 
+					                                                                    x_goal = self.transformed_goal[0], y_goal = self.transformed_goal[1],
+					                                                                    x_obs = self.cloud[:,0], y_obs = self.cloud[:,1],
+                                                                                        controls_init=self.controls_init
+                                                                                        )
 
-            self.key, _ = jax.random.split(self.key)
 
-            primitive_optimal,primitives_ellite,v_optimal,psidot_optimal,mean_actions  = self.planner.compute_controls(key_init = self.key,
-                                                                                                                    x_init = 0., y_init = 0., psi_init = 0.,
-                                                                                                                    v_init=self.linear_vel[0], psi_dot_init = self.angular_vel.item(),
-                                                                                                                    x_fin=self.transformed_goal[0],y_fin=self.transformed_goal[1],
-                                                                                                                    d_init=self.min_dist,
-                                                                                                                    pcd= self.cloud,
-                                                                                                                    mean_actions_init = self.mean_actions_jackal_nav)
+            # print("velocity: ", v_optimal)
 
-            self.mean_actions_jackal_nav = mean_actions
+            self.controls_init = jnp.concatenate((v_optimal,omega_optimal))
 
-            primitives_ellite = np.delete(primitives_ellite, np.where(np.all(primitives_ellite == primitive_optimal, axis=1))[0], axis = 0)
 
-            if v_optimal != None and np.linalg.norm(np.array([0.,0.]) - self.transformed_goal[:2]) > 0.75:
-                self.publish_cmd_vel_msg(v_optimal[1], psidot_optimal[1], self.num)
+            if v_optimal[1] != None and np.linalg.norm(np.array([0.,0.]) - self.transformed_goal[:2]) > 0.75:
+                self.publish_cmd_vel_msg(v_optimal[1], omega_optimal[1], self.num)
 
             if np.linalg.norm(np.array([0.,0.]) - self.transformed_goal[:2]) < 0.75:
                 print("!!REACHED GOAL!!")
 
-            self._visualize_trajectories(primitive_optimal, primitives_ellite)
+            self._visualize_trajectories(traj_optimal)
             self._visualize_goal()
             self._visualize_goal_tf(self.transformed_goal)
             self.num += 1
@@ -376,16 +369,9 @@ class JackalNav:
 
         self._spheremarker_pub.publish(marker)
 
-    def _visualize_trajectories(self, traj_optimal, primitives_roll):
-        
-        marker_array = MarkerArray()
-        for idx in range(len(primitives_roll)):
-            marker = self._create_primitive_marker(idx, primitives_roll[idx], "primitives_roll", [0.0, 1.0, 0.0])
-            marker_array.markers.append(marker)
+    def _visualize_trajectories(self, traj_optimal):
 
         trajoptimal_marker = self._create_primitive_marker( 0, traj_optimal, "traj_optimal", [1.0, 0.0, 0.0])
-
-        self._markerarr_pub.publish(marker_array)
         self._linestrip_pub.publish(trajoptimal_marker)
 
 
