@@ -1,0 +1,9 @@
+<launch>
+
+
+  <!-- <node name="jackal_nav" pkg="primitives" type="jackalnav.py" />  -->
+
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find primitives)/rviz/hardware.rviz" >
+  </node>
+
+</launch>
