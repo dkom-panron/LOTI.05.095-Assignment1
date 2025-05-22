@@ -5,7 +5,7 @@ import jax.numpy as jnp
 from functools import partial
 from jax import jit, random, vmap, grad, jacfwd, jacrev
 import time
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import jax
 
 class gradient_descent:
@@ -60,7 +60,7 @@ class gradient_descent:
 	@partial(jit, static_argnums=(0,))
 	def compute_obs_cost(self,x_obs,y_obs,x,y):
 
-		obstacle = (x - x_obs)**2+(y-y_obs)**2-(1.0)**2
+		obstacle = (x - x_obs)**2+(y-y_obs)**2-(.5)**2
 
 		cost_obstacle = (1/self.beta)*jnp.log(1 + jnp.exp(-self.beta*obstacle))
 		# cost_obstacle = jnp.maximum(0,-obstacle)
@@ -108,10 +108,6 @@ class gradient_descent:
 		cost_goal_traj = jnp.sum(c_goal_traj)
 		
 
-		# for GD the obstacle cost function
-		# is sum(max(0, f)), where f is
-		# -(x-x0)^2 - (y-y0)^2 + d^2
-		# for gauss newton, we simply remove the sum
 		cost_obstacle_b = self.compute_obs_cost_batch(x_obs,y_obs,x,y)
 		cost_obstacle = jnp.sum(jnp.maximum(jnp.zeros(self.n), cost_obstacle_b))
 		
@@ -133,7 +129,7 @@ class gradient_descent:
 		return cost
 
 	@partial(jit, static_argnums=(0,))
-	def compute_controls(self, x_init, y_init, theta_init, 
+	def compute_controls_nesterov(self, x_init, y_init, theta_init, 
 				  v_init, omega_init,
 				  x_goal, y_goal,
 				  x_obs, y_obs,
