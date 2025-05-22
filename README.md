@@ -44,3 +44,13 @@ roslaunch depth_to_pcd depth_to_pcd.launch
 roslaunch planner jackal_custom.launch
 rosrun planner jackalnav.py
 ```
+
+
+You can specify the following arguments for the planner:
+
+	_optimizer:=[nesterov, gauss_newton, cem, cem_nesterov] (default nesterov)
+	_maxiter:=int (default 100)
+	_num_controls:=int (default 20)
+	_num_samples:=int (default 50, only for cem and cem_nesterov)
+	_percentage_elite:=float (default 0.1, only for cem and cem_nesterov)
+	_stomp_like:=bool (default True, only for cem and cem_nesterov)
