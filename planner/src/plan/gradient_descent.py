@@ -60,7 +60,7 @@ class gradient_descent:
 	@partial(jit, static_argnums=(0,))
 	def compute_obs_cost(self,x_obs,y_obs,x,y):
 
-		obstacle = (x - x_obs)**2+(y-y_obs)**2-(.5)**2
+		obstacle = (x - x_obs)**2+(y-y_obs)**2-(1.0)**2
 
 		cost_obstacle = (1/self.beta)*jnp.log(1 + jnp.exp(-self.beta*obstacle))
 		# cost_obstacle = jnp.maximum(0,-obstacle)

@@ -21,7 +21,7 @@ class CEM:
         ## For cost
         self.goal_cost = 1.0
         self.smoothness_cost = 0.1
-        self.obstacle_cost = 8.0
+        self.obstacle_cost = 10.0
         self.obstacle_radius = 1.0
         self.velocity_cost = 0.2
         self.omega_cost = 0.2
