@@ -17,7 +17,12 @@ import open3d as o3d
 import open3d_conversions
 
 from scipy.spatial.transform import Rotation as R
+
 from plan.gradient_descent import gradient_descent
+from plan.cem import CEM
+from plan.gauss_newton import gauss_newton
+from plan.cem_nesterov import cem_nesterov
+
 import time
 import matplotlib.pyplot as plt
 
@@ -29,11 +34,35 @@ class JackalNav:
     #----------------------------------------------------------------------------------
 
     ## Planner
-    
-    self.num_controls = 30
-    maxiter = 100
 
-    self.planner = gradient_descent(maxiter, self.num_controls)
+    # can be [nesterov, gauss_newton, cem, cem_nesterov]
+    self.optimizer = rospy.get_param("~optimizer", "nesterov")
+    self.maxiter = rospy.get_param("~maxiter", 100)
+    self.num_controls = rospy.get_param("~num_controls", 20)
+
+    if self.optimizer == "nesterov":
+      self.planner = gradient_descent(self.maxiter, self.num_controls)
+      print(f"[PLANNER] Using Nesterov with maxiter={self.maxiter} and num_controls={self.num_controls}")
+    elif self.optimizer == "gauss_newton":
+      self.planner = gauss_newton(self.maxiter, self.num_controls)
+      print(f"[PLANNER] Using Gauss-Newton with maxiter={self.maxiter} and num_controls={self.num_controls}")
+    elif self.optimizer == "cem":
+      self.num_samples = rospy.get_param("~num_samples", 50)
+      self.percentage_elite = rospy.get_param("~percentage_elite", 0.1)
+      self.stomp_like = rospy.get_param("~stomp_like", True)
+      self.planner = CEM(self.maxiter, self.num_controls, num_samples=self.num_samples, percentage_elite=self.percentage_elite, stomp_like=self.stomp_like)
+      print(f"[PLANNER] Using CEM with maxiter={self.maxiter}, num_controls={self.num_controls}, num_samples={self.num_samples}, percentage_elite={self.percentage_elite}, stomp_like={self.stomp_like}")
+
+      self.cem_mean = jnp.zeros(2 * self.num_controls)
+    elif self.optimizer == "cem_nesterov":
+      self.num_samples = rospy.get_param("~num_samples", 50)
+      self.percentage_elite = rospy.get_param("~percentage_elite", 0.1)
+      self.stomp_like = rospy.get_param("~stomp_like", True)
+      self.planner = cem_nesterov(self.maxiter, self.num_controls, cem_num_samples=self.num_samples, cem_percentage_elite=self.percentage_elite, cem_stomp_like=self.stomp_like)
+      print(f"[PLANNER] Using CEM Nesterov with maxiter={self.maxiter}, num_controls={self.num_controls}, num_samples={self.num_samples}, percentage_elite={self.percentage_elite}, stomp_like={self.stomp_like}")
+
+      self.cem_mean = jnp.zeros(2 * self.num_controls)
+
     self.num = 0
     self.controls_init = 0.01*jnp.ones(2*self.num_controls)
     #----------------------------------------------------------------------------------
@@ -113,19 +142,27 @@ class JackalNav:
       (self.transformed_goal is not None) and \
       (self.cloud is not None) :
 
-      v_optimal, omega_optimal, traj_optimal = self.planner.compute_controls_nesterov(
-                                            x_init = 0., y_init= 0., theta_init = 0.,
-                                            v_init = self.linear_vel_mag.item(), omega_init = self.angular_vel.item(), 
-                                            x_goal = self.transformed_goal[0], y_goal = self.transformed_goal[1],
-                                            x_obs = self.cloud[:,0], y_obs = self.cloud[:,1],
-                                            controls_init=self.controls_init
-                                            )
-
-
-      # print("velocity: ", v_optimal)
-
-      self.controls_init = jnp.concatenate((v_optimal,omega_optimal))
-
+      if self.optimizer == "cem" or self.optimizer == "cem_nesterov":
+        v_optimal, omega_optimal, traj_optimal, new_mean = self.planner.compute_controls(
+          x_init = 0., y_init= 0., theta_init = 0.,
+          v_init = self.linear_vel_mag.item(), omega_init = self.angular_vel.item(), 
+          x_goal = self.transformed_goal[0], y_goal = self.transformed_goal[1],
+          x_obs = self.cloud[:,0], y_obs = self.cloud[:,1],
+          #controls_init=self.controls_init
+          mean_init=self.cem_mean
+          )
+        
+        self.cem_mean = new_mean
+      else:
+        v_optimal, omega_optimal, traj_optimal = self.planner.compute_controls(
+          x_init = 0., y_init= 0., theta_init = 0.,
+          v_init = self.linear_vel_mag.item(), omega_init = self.angular_vel.item(), 
+          x_goal = self.transformed_goal[0], y_goal = self.transformed_goal[1],
+          x_obs = self.cloud[:,0], y_obs = self.cloud[:,1],
+          controls_init=self.controls_init
+          )
+        
+        self.controls_init = jnp.concatenate((v_optimal,omega_optimal))
 
       if v_optimal[1] != None and np.linalg.norm(np.array([0.,0.]) - self.transformed_goal[:2]) > 0.75:
         self.publish_cmd_vel_msg(v_optimal[1], omega_optimal[1], self.num)
