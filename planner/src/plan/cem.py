@@ -22,11 +22,11 @@ class CEM:
         self.goal_cost = 1.0
         self.smoothness_cost = 0.1
         self.obstacle_cost = 10.0
-        self.obstacle_radius = 1.0
+        self.obstacle_radius = 0.5
         self.velocity_cost = 0.2
         self.omega_cost = 0.2
 
-        self.v_max = 1.5
+        self.v_max = 0.75
         self.v_min = -0.1
         self.omega_max = 1.0
         self.omega_min = -self.omega_max
@@ -171,6 +171,12 @@ class CEM:
             + self.omega_cost*cost_omega
         
         return cost
+    
+    @partial(jit, static_argnums=(0,))
+    def clip_controls(self, controls):
+        controls = controls.at[..., :self.n].set(jnp.clip(controls[..., :self.n], self.v_min, self.v_max))
+        controls = controls.at[..., self.n:].set(jnp.clip(controls[..., self.n:], self.omega_min, self.omega_max))
+        return controls
 
     @partial(jit, static_argnums=(0,))
     def compute_controls(self, x_init, y_init, theta_init, 
@@ -185,6 +191,8 @@ class CEM:
             key, subkey = random.split(key)
             
             controls = jax.random.multivariate_normal(subkey, mean, cov, (self.num_samples,))
+            controls = self.clip_controls(controls)
+
             
             cost_samples = self.compute_cost_batch(
                 controls,
@@ -213,6 +221,7 @@ class CEM:
         
         key, subkey = random.split(final_key)
         controls = jax.random.multivariate_normal(subkey, final_mean, final_cov, (self.num_samples,))
+        controls = self.clip_controls(controls)
         cost_samples = self.compute_cost_batch(
             controls,
             x_init, y_init, theta_init, 

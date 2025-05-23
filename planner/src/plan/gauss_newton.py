@@ -17,21 +17,21 @@ class gauss_newton:
 
         self.eta = 0.1 # nb, inverse of gradient descent eta
 
-        self.w_goal = 0.25
-        self.w_velocity = 0.75
-        self.w_omega = 0.5
+        self.w_goal = 0.2
+        self.w_velocity = 6.5
+        self.w_omega = 4.0
         self.w_smoothness_velocity = 0.5
         self.w_smoothness_omega = 0.5
-        self.w_obstacle = 10.0
+        self.w_obstacle = 3.0
 
         self.w_trajectory = 0.2
 
-        self.v_max = 1.5
+        self.v_max = 0.3
         self.v_min = -0.1
         self.omega_max = 1.
         self.omega_min = - self.omega_max
 
-        self.beta = 5.0
+        self.beta = 10.0
 
         self.jac_func = jit(jacfwd(self.compute_error_func, argnums = (0)))
         self.compute_obs_cost_batch = jit(vmap(self.compute_obs_cost, in_axes = (0,0,None,None)))

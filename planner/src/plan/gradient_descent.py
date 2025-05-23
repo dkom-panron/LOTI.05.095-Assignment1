@@ -5,7 +5,7 @@ import jax.numpy as jnp
 from functools import partial
 from jax import jit, random, vmap, grad, jacfwd, jacrev
 import time
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import jax
 
 class gradient_descent:
@@ -17,8 +17,8 @@ class gradient_descent:
 
 		self.gamma = 0.95
 		self.eta = 0.002
-		self.beta = 3.
-		self.v_max = 1.5
+		self.beta = 10.
+		self.v_max = 0.5
 		self.v_min = -0.1
 		self.omega_max = 1.
 		self.omega_min = - self.omega_max
@@ -29,7 +29,7 @@ class gradient_descent:
 		self.w_2 = .175	# Goal Cost - entire rollout
 		self.w_3 = 1.25	# Obstacle cost
 		self.w_4 = .075	# Smoothness cost
-		self.w_5 = .75	# Velocity cost
+		self.w_5 = 9.5	# Velocity cost
 		self.w_6 = .5	# Omega cost
 		#------------------------------------------
 
@@ -129,7 +129,7 @@ class gradient_descent:
 		return cost
 
 	@partial(jit, static_argnums=(0,))
-	def compute_controls_nesterov(self, x_init, y_init, theta_init, 
+	def compute_controls(self, x_init, y_init, theta_init, 
 				  v_init, omega_init,
 				  x_goal, y_goal,
 				  x_obs, y_obs,
@@ -166,10 +166,10 @@ class gradient_descent:
 
 		v_optimal = carry_final[0][0:self.n]
 		omega_optimal = carry_final[0][self.n:2*self.n]
-		x_optimal, y_optimal, _, _ = self.compute_rollout(carry_final[0], x_init, y_init, theta_init,  v_init, omega_init)
+		x_optimal, y_optimal, v, omega = self.compute_rollout(carry_final[0], x_init, y_init, theta_init,  v_init, omega_init)
 		traj_optimal = jnp.vstack((x_optimal,y_optimal)).T
 
-		return v_optimal, omega_optimal, traj_optimal
+		return v, omega, traj_optimal
 		
 # # # ## Testing
 # planner = gradient_descent(maxiter = 50)

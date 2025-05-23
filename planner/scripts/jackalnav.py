@@ -24,7 +24,7 @@ from plan.gauss_newton import gauss_newton
 from plan.cem_nesterov import cem_nesterov
 
 import time
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 class JackalNav:
   def __init__(self):
@@ -38,7 +38,7 @@ class JackalNav:
     # can be [nesterov, gauss_newton, cem, cem_nesterov]
     self.optimizer = rospy.get_param("~optimizer", "nesterov")
     self.maxiter = rospy.get_param("~maxiter", 100)
-    self.num_controls = rospy.get_param("~num_controls", 20)
+    self.num_controls = rospy.get_param("~num_controls", 60)
 
     if self.optimizer == "nesterov":
       self.planner = gradient_descent(self.maxiter, self.num_controls)
@@ -163,6 +163,8 @@ class JackalNav:
           )
         
         self.controls_init = jnp.concatenate((v_optimal,omega_optimal))
+      
+      #print(f"{v_optimal[1]=}")
 
       if v_optimal[1] != None and np.linalg.norm(np.array([0.,0.]) - self.transformed_goal[:2]) > 0.75:
         self.publish_cmd_vel_msg(v_optimal[1], omega_optimal[1], self.num)
